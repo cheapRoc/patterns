@@ -31,6 +31,7 @@ type _TransitionMap map[_FromIDToIDTuple]_Transition
 // FSM is a Finite State Machine implementation.  An FSM is created via a
 // Builder.
 type FSM struct {
+	previousState State
 	currentState  State
 	onExitActions []ExitHandler
 	lock          sync.Mutex
@@ -105,6 +106,15 @@ func (m *FSM) CurrentState() State {
 	return m.currentState
 }
 
+// PreviousState returns the previous state of the FSM.  This method will
+// deadlock if called within a Transition Handler.
+func (m *FSM) PreviousState() State {
+	m.lock.Lock()
+	defer m.lock.Unlock()
+
+	return m.previousState
+}
+
 // Transition transitions the state of the FSM from one state to another.
 // Before transitioning, the FSM looks up to ensure that a given transition
 // exists.  If the transition exists, all registered guards are executed
@@ -152,6 +162,7 @@ func (m *FSM) Transition(s State) error {
 	}
 
 	// 5. Change the state
+	m.previousState = m.currentState
 	m.currentState = s
 	m.onExitActions = trans.onExitActions
 
