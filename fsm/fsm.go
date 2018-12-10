@@ -174,6 +174,13 @@ func (m *FSM) Transition(s State) error {
 	return nil
 }
 
+// ReloadState reloads the state of a state machine by setting the previous
+// state then self transitioning into the current state.
+func (m *FSM) ReloadState(p, c State) error {
+	m.previousState = p
+	return m.Transition(c)
+}
+
 // Copy creates a duplicate FromToTuple
 func (ftt FromToTuple) Copy() FromToTuple {
 	return FromToTuple{
